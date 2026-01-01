@@ -39,11 +39,11 @@ const AttendancePage = () => {
             <>
               {isCheckedIn ? (
                 <p className="text-lg text-green-600 dark:text-green-400">
-                  Vous êtes actuellement pointé(e) depuis {format(new Date(todayAttendance.check_in!), 'HH:mm', { locale: fr })}.
+                  Vous êtes actuellement pointé(e) depuis {todayAttendance.check_in ? format(new Date(todayAttendance.check_in), 'HH:mm', { locale: fr }) : ''}.
                 </p>
               ) : todayAttendance?.check_out ? (
                 <p className="text-lg text-blue-600 dark:text-blue-400">
-                  Vous avez terminé votre journée à {format(new Date(todayAttendance.check_out!), 'HH:mm', { locale: fr })}.
+                  Vous avez terminé votre journée à {todayAttendance.check_out ? format(new Date(todayAttendance.check_out), 'HH:mm', { locale: fr }) : ''}.
                 </p>
               ) : (
                 <p className="text-lg text-muted-foreground">
