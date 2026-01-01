@@ -20,6 +20,13 @@ const AttendancePage = () => {
 
   const isCheckedIn = todayAttendance && todayAttendance.check_in && !todayAttendance.check_out;
 
+  // Helper function to safely format date strings
+  const safeFormatTime = (dateString: string | null | undefined) => {
+    if (!dateString) return '-';
+    const date = new Date(dateString);
+    return isNaN(date.getTime()) ? '-' : format(date, 'HH:mm', { locale: fr });
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-3xl font-bold text-foreground">Système de Pointage</h1>
@@ -39,11 +46,11 @@ const AttendancePage = () => {
             <>
               {isCheckedIn ? (
                 <p className="text-lg text-green-600 dark:text-green-400">
-                  Vous êtes actuellement pointé(e) depuis {todayAttendance.check_in ? format(new Date(todayAttendance.check_in), 'HH:mm', { locale: fr }) : ''}.
+                  Vous êtes actuellement pointé(e) depuis {safeFormatTime(todayAttendance.check_in)}.
                 </p>
               ) : todayAttendance?.check_out ? (
                 <p className="text-lg text-blue-600 dark:text-blue-400">
-                  Vous avez terminé votre journée à {todayAttendance.check_out ? format(new Date(todayAttendance.check_out), 'HH:mm', { locale: fr }) : ''}.
+                  Vous avez terminé votre journée à {safeFormatTime(todayAttendance.check_out)}.
                 </p>
               ) : (
                 <p className="text-lg text-muted-foreground">
@@ -97,8 +104,8 @@ const AttendancePage = () => {
                   {attendanceHistory.map((record) => (
                     <TableRow key={record.id}>
                       <TableCell>{format(new Date(record.date), 'dd/MM/yyyy', { locale: fr })}</TableCell>
-                      <TableCell>{record.check_in ? format(new Date(record.check_in), 'HH:mm', { locale: fr }) : '-'}</TableCell>
-                      <TableCell>{record.check_out ? format(new Date(record.check_out), 'HH:mm', { locale: fr }) : '-'}</TableCell>
+                      <TableCell>{safeFormatTime(record.check_in)}</TableCell>
+                      <TableCell>{safeFormatTime(record.check_out)}</TableCell>
                       <TableCell>{record.status}</TableCell>
                       <TableCell>{record.notes || '-'}</TableCell>
                     </TableRow>
