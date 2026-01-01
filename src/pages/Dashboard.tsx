@@ -3,18 +3,28 @@ import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, CalendarCheck, Clock, TrendingUp } from "lucide-react";
+import { useDashboardData } from "@/hooks/use-dashboard-data"; // Import the new hook
 
 const Dashboard = () => {
-  const { session, user, loading } = useSession();
+  const { session, user, loading: sessionLoading } = useSession();
   const navigate = useNavigate();
+  const {
+    totalEmployees,
+    isLoadingEmployees,
+    todayAttendance,
+    isLoadingAttendance,
+    monthlyOvertime,
+    isLoadingOvertime,
+    isLoading: dashboardDataLoading,
+  } = useDashboardData();
 
   useEffect(() => {
-    if (!loading && !session) {
+    if (!sessionLoading && !session) {
       navigate('/login');
     }
-  }, [session, loading, navigate]);
+  }, [session, sessionLoading, navigate]);
 
-  if (loading) {
+  if (sessionLoading || dashboardDataLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
         <p className="text-lg text-gray-700 dark:text-gray-300">Chargement du tableau de bord...</p>
@@ -42,7 +52,9 @@ const Dashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div> {/* Placeholder */}
+            <div className="text-2xl font-bold">
+              {isLoadingEmployees ? '...' : totalEmployees ?? 0}
+            </div>
             <p className="text-xs text-muted-foreground">
               +0% ce mois-ci
             </p>
@@ -54,7 +66,9 @@ const Dashboard = () => {
             <CalendarCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0</div> {/* Placeholder */}
+            <div className="text-2xl font-bold">
+              {isLoadingAttendance ? '...' : todayAttendance ?? 0}
+            </div>
             <p className="text-xs text-muted-foreground">
               0 en retard
             </p>
@@ -66,7 +80,9 @@ const Dashboard = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">0h</div> {/* Placeholder */}
+            <div className="text-2xl font-bold">
+              {isLoadingOvertime ? '...' : `${monthlyOvertime?.toFixed(1) ?? 0}h`}
+            </div>
             <p className="text-xs text-muted-foreground">
               +0% par rapport au mois dernier
             </p>
