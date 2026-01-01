@@ -25,7 +25,7 @@ const CalendarPage = () => {
       "relative p-1 text-center",
       isCurrentMonth ? "text-foreground" : "text-muted-foreground opacity-50",
       isToday ? "bg-primary text-primary-foreground rounded-md" : "",
-      isWeekend(day) ? "bg-gray-100 dark:bg-gray-700" : "",
+      isWeekend(day) ? "bg-secondary dark:bg-secondary" : "", // Use secondary for weekend background
     ].join(" ");
 
     return (
@@ -58,9 +58,9 @@ const CalendarPage = () => {
             return (
               <Popover key={index}>
                 <PopoverTrigger asChild>
-                  <span className={`h-2 w-2 rounded-full ${colorClass} cursor-pointer`} />
+                  <span className={`h-2 w-2 rounded-full ${colorClass} cursor-pointer transition-transform duration-200 hover:scale-125`} />
                 </PopoverTrigger>
-                <PopoverContent className="text-sm p-2">
+                <PopoverContent className="text-sm p-2 bg-card text-card-foreground border border-border rounded-md shadow-lg">
                   {tooltipContent}
                 </PopoverContent>
               </Popover>
@@ -73,50 +73,50 @@ const CalendarPage = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Calendrier</h1>
-      <p className="text-lg text-gray-600 dark:text-gray-400">
+      <h1 className="text-3xl font-bold text-foreground">Calendrier</h1>
+      <p className="text-lg text-muted-foreground">
         Visualisez les présences, absences, congés et jours fériés de l'équipe.
       </p>
 
       {/* Calendar Legend */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Légende des couleurs</CardTitle>
+          <CardTitle className="text-xl font-semibold">Légende des couleurs</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-wrap gap-4">
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-green-500 rounded-full"></span>
-              <span className="text-gray-700 dark:text-gray-300">Présent</span>
+              <span className="text-muted-foreground">Présent</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-orange-500 rounded-full"></span>
-              <span className="text-gray-700 dark:text-gray-300">En retard</span>
+              <span className="text-muted-foreground">En retard</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-red-500 rounded-full"></span>
-              <span className="text-gray-700 dark:text-gray-300">Absent</span>
+              <span className="text-muted-foreground">Absent</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-blue-500 rounded-full"></span>
-              <span className="text-gray-700 dark:text-gray-300">En congé (Approuvé)</span>
+              <span className="text-muted-foreground">En congé (Approuvé)</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-purple-500 rounded-full"></span>
-              <span className="text-gray-700 dark:text-gray-300">Jour Férié</span>
+              <span className="text-muted-foreground">Jour Férié</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="w-4 h-4 bg-gray-500 rounded-full"></span>
-              <span className="text-gray-700 dark:text-gray-300">Week-end</span>
+              <span className="text-muted-foreground">Week-end</span>
             </div>
           </div>
         </CardContent>
       </Card>
 
       {/* Full Monthly Calendar */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Calendrier Mensuel Complet</CardTitle>
+          <CardTitle className="text-xl font-semibold">Calendrier Mensuel Complet</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -129,7 +129,7 @@ const CalendarPage = () => {
               month={month}
               onMonthChange={handleMonthChange}
               selected={new Date()} // Highlight today's date
-              className="rounded-md border"
+              className="rounded-md border bg-background"
               components={{
                 DayContent: ({ date }) => renderDay(date),
                 Caption: ({ displayMonth }) => (
@@ -138,6 +138,7 @@ const CalendarPage = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleMonthChange(new Date(displayMonth.getFullYear(), displayMonth.getMonth() - 1, 1))}
+                      className="button-hover-effect"
                     >
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
@@ -148,6 +149,7 @@ const CalendarPage = () => {
                       variant="ghost"
                       size="sm"
                       onClick={() => handleMonthChange(new Date(displayMonth.getFullYear(), displayMonth.getMonth() + 1, 1))}
+                      className="button-hover-effect"
                     >
                       <ChevronRight className="h-4 w-4" />
                     </Button>

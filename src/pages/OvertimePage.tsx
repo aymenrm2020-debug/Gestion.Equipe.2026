@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { useOvertime } from '@/hooks/use-overtime';
 import { useSession } from '@/components/SessionContextProvider';
+import { showError } from '@/utils/toast';
 
 const OvertimePage = () => {
   const { user } = useSession();
@@ -34,7 +35,7 @@ const OvertimePage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id || !overtimeDate || !hours) {
-      // Add toast error here
+      showError('Veuillez remplir tous les champs obligatoires (Date, Nombre d\'heures).');
       return;
     }
 
@@ -59,15 +60,15 @@ const OvertimePage = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Heures Supplémentaires</h1>
-      <p className="text-lg text-gray-600 dark:text-gray-400">
+      <h1 className="text-3xl font-bold text-foreground">Heures Supplémentaires</h1>
+      <p className="text-lg text-muted-foreground">
         Suivi et gestion des heures supplémentaires.
       </p>
 
       {/* Request Form */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Nouvelle Demande d'Heures Supplémentaires</CardTitle>
+          <CardTitle className="text-xl font-semibold">Nouvelle Demande d'Heures Supplémentaires</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
@@ -78,7 +79,7 @@ const OvertimePage = () => {
                   <Button
                     variant={"outline"}
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal button-hover-effect",
                       !overtimeDate && "text-muted-foreground"
                     )}
                   >
@@ -86,7 +87,7 @@ const OvertimePage = () => {
                     {overtimeDate ? format(overtimeDate, "PPP", { locale: fr }) : <span>Choisir une date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0 bg-card text-card-foreground border border-border rounded-md shadow-lg">
                   <Calendar
                     mode="single"
                     selected={overtimeDate}
@@ -107,6 +108,7 @@ const OvertimePage = () => {
                 placeholder="Ex: 8.5"
                 value={hours}
                 onChange={(e) => setHours(e.target.value)}
+                className="border-border focus-visible:ring-ring focus-visible:ring-offset-background"
               />
             </div>
 
@@ -117,10 +119,11 @@ const OvertimePage = () => {
                 placeholder="Ajoutez des détails sur les heures supplémentaires..."
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
+                className="border-border focus-visible:ring-ring focus-visible:ring-offset-background"
               />
             </div>
 
-            <Button type="submit" className="md:col-span-2" disabled={isCreatingOvertime}>
+            <Button type="submit" className="md:col-span-2 button-hover-effect" disabled={isCreatingOvertime}>
               {isCreatingOvertime ? 'Soumission en cours...' : 'Soumettre la Demande'}
             </Button>
           </form>
@@ -128,9 +131,9 @@ const OvertimePage = () => {
       </Card>
 
       {/* Pending Overtime Requests (for managers/approvers) */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Demandes en Attente</CardTitle>
+          <CardTitle className="text-xl font-semibold">Demandes en Attente</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingPendingOvertimeRequests ? (
@@ -160,6 +163,7 @@ const OvertimePage = () => {
                           size="sm"
                           onClick={() => handleApprove(request.id)}
                           disabled={isApprovingOvertime}
+                          className="button-hover-effect"
                         >
                           Approuver
                         </Button>
@@ -176,9 +180,9 @@ const OvertimePage = () => {
       </Card>
 
       {/* History */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Historique de Mes Demandes</CardTitle>
+          <CardTitle className="text-xl font-semibold">Historique de Mes Demandes</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingUserOvertimeRequests ? (

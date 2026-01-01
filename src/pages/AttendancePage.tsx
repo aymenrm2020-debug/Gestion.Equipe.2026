@@ -22,15 +22,15 @@ const AttendancePage = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Système de Pointage</h1>
-      <p className="text-lg text-gray-600 dark:text-gray-400">
+      <h1 className="text-3xl font-bold text-foreground">Système de Pointage</h1>
+      <p className="text-lg text-muted-foreground">
         Enregistrez et gérez vos heures d'entrée et de sortie.
       </p>
 
       {/* Manual Punching */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Pointage Manuel</CardTitle>
+          <CardTitle className="text-xl font-semibold">Pointage Manuel</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col items-center justify-center gap-4">
           {isLoadingTodayAttendance ? (
@@ -46,7 +46,7 @@ const AttendancePage = () => {
                   Vous avez terminé votre journée à {format(new Date(todayAttendance.check_out!), 'HH:mm', { locale: fr })}.
                 </p>
               ) : (
-                <p className="text-lg text-gray-700 dark:text-gray-300">
+                <p className="text-lg text-muted-foreground">
                   Vous n'êtes pas encore pointé(e) aujourd'hui.
                 </p>
               )}
@@ -55,7 +55,7 @@ const AttendancePage = () => {
                 <Button
                   onClick={handleCheckIn}
                   disabled={isCheckedIn || isCheckingIn || isCheckingOut}
-                  className="px-6 py-3 text-lg"
+                  className="px-6 py-3 text-lg button-hover-effect"
                 >
                   {isCheckingIn ? 'Pointage en cours...' : 'Pointer l\'entrée'}
                 </Button>
@@ -63,7 +63,7 @@ const AttendancePage = () => {
                   onClick={handleCheckOut}
                   disabled={!isCheckedIn || isCheckingIn || isCheckingOut}
                   variant="secondary"
-                  className="px-6 py-3 text-lg"
+                  className="px-6 py-3 text-lg button-hover-effect"
                 >
                   {isCheckingOut ? 'Pointage en cours...' : 'Pointer la sortie'}
                 </Button>
@@ -74,9 +74,9 @@ const AttendancePage = () => {
       </Card>
 
       {/* Attendance History */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Historique des Pointages</CardTitle>
+          <CardTitle className="text-xl font-semibold">Historique des Pointages</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingAttendanceHistory ? (

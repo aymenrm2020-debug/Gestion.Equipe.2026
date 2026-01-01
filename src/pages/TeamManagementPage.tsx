@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTeamManagement } from '@/hooks/use-team-management';
 import { Profile } from '@/integrations/supabase/teams';
 import { Loader2 } from 'lucide-react';
+import { showError } from '@/utils/toast';
 
 const TeamManagementPage = () => {
   const {
@@ -37,6 +38,8 @@ const TeamManagementPage = () => {
       createTeam(newTeamName);
       setNewTeamName('');
       setIsTeamDialogOpen(false);
+    } else {
+      showError('Le nom de l\'équipe ne peut pas être vide.');
     }
   };
 
@@ -56,7 +59,7 @@ const TeamManagementPage = () => {
         updates: {
           first_name: editedFirstName,
           last_name: editedLastName,
-          team_id: editedTeamId,
+          team_id: editedTeamId === 'null' ? null : editedTeamId, // Handle 'null' string from select
         },
       });
       setIsProfileDialogOpen(false);
@@ -66,15 +69,15 @@ const TeamManagementPage = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Gestion d'Équipe</h1>
-      <p className="text-lg text-gray-600 dark:text-gray-400">
+      <h1 className="text-3xl font-bold text-foreground">Gestion d'Équipe</h1>
+      <p className="text-lg text-muted-foreground">
         Gérez les profils des employés et les équipes.
       </p>
 
       {/* Employee Profiles */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Profils des Employés</CardTitle>
+          <CardTitle className="text-xl font-semibold">Profils des Employés</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingProfiles ? (
@@ -99,7 +102,7 @@ const TeamManagementPage = () => {
                       <TableCell>{profile.first_name || '-'}</TableCell>
                       <TableCell>{profile.teams?.name || 'Non assignée'}</TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm" onClick={() => handleEditProfile(profile)}>
+                        <Button variant="outline" size="sm" onClick={() => handleEditProfile(profile)} className="button-hover-effect">
                           Modifier
                         </Button>
                       </TableCell>
@@ -115,14 +118,14 @@ const TeamManagementPage = () => {
       </Card>
 
       {/* Team Management */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Gestion des Équipes</CardTitle>
+          <CardTitle className="text-xl font-semibold">Gestion des Équipes</CardTitle>
           <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
             <DialogTrigger asChild>
-              <Button>Créer une Équipe</Button>
+              <Button className="button-hover-effect">Créer une Équipe</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="bg-card text-card-foreground border border-border rounded-md shadow-lg">
               <DialogHeader>
                 <DialogTitle>Créer une Nouvelle Équipe</DialogTitle>
               </DialogHeader>
@@ -135,12 +138,12 @@ const TeamManagementPage = () => {
                     id="newTeamName"
                     value={newTeamName}
                     onChange={(e) => setNewTeamName(e.target.value)}
-                    className="col-span-3"
+                    className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
                     required
                   />
                 </div>
                 <DialogFooter>
-                  <Button type="submit" disabled={isCreatingTeam}>
+                  <Button type="submit" disabled={isCreatingTeam} className="button-hover-effect">
                     {isCreatingTeam ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                     Créer
                   </Button>
@@ -181,7 +184,7 @@ const TeamManagementPage = () => {
 
       {/* Edit Profile Dialog */}
       <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
-        <DialogContent>
+        <DialogContent className="bg-card text-card-foreground border border-border rounded-md shadow-lg">
           <DialogHeader>
             <DialogTitle>Modifier le Profil de {editingProfile?.first_name} {editingProfile?.last_name}</DialogTitle>
           </DialogHeader>
@@ -194,7 +197,7 @@ const TeamManagementPage = () => {
                 id="firstName"
                 value={editedFirstName}
                 onChange={(e) => setEditedFirstName(e.target.value)}
-                className="col-span-3"
+                className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
                 required
               />
             </div>
@@ -206,7 +209,7 @@ const TeamManagementPage = () => {
                 id="lastName"
                 value={editedLastName}
                 onChange={(e) => setEditedLastName(e.target.value)}
-                className="col-span-3"
+                className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
                 required
               />
             </div>
@@ -214,8 +217,8 @@ const TeamManagementPage = () => {
               <Label htmlFor="team" className="text-right">
                 Équipe
               </Label>
-              <Select value={editedTeamId || ''} onValueChange={setEditedTeamId}>
-                <SelectTrigger id="team" className="col-span-3">
+              <Select value={editedTeamId || 'null'} onValueChange={setEditedTeamId}>
+                <SelectTrigger id="team" className="col-span-3 button-hover-effect">
                   <SelectValue placeholder="Assigner à une équipe" />
                 </SelectTrigger>
                 <SelectContent>
@@ -229,7 +232,7 @@ const TeamManagementPage = () => {
               </Select>
             </div>
             <DialogFooter>
-              <Button type="submit" disabled={isUpdatingProfile}>
+              <Button type="submit" disabled={isUpdatingProfile} className="button-hover-effect">
                 {isUpdatingProfile ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                 Enregistrer les modifications
               </Button>

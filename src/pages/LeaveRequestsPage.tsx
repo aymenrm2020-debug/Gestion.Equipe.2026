@@ -14,6 +14,7 @@ import { cn } from '@/lib/utils';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useLeaveRequests } from '@/hooks/use-leave-requests';
 import { useSession } from '@/components/SessionContextProvider';
+import { showError } from '@/utils/toast';
 
 const LeaveRequestsPage = () => {
   const { user } = useSession();
@@ -36,7 +37,7 @@ const LeaveRequestsPage = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!user?.id || !leaveType || !startDate) {
-      // Add toast error here
+      showError('Veuillez remplir tous les champs obligatoires (Type de Congé, Date de Début).');
       return;
     }
 
@@ -69,22 +70,22 @@ const LeaveRequestsPage = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Absences & Congés</h1>
-      <p className="text-lg text-gray-600 dark:text-gray-400">
+      <h1 className="text-3xl font-bold text-foreground">Absences & Congés</h1>
+      <p className="text-lg text-muted-foreground">
         Gérez les demandes d'absence, de congés et d'autorisations.
       </p>
 
       {/* Request Form */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Nouvelle Demande</CardTitle>
+          <CardTitle className="text-xl font-semibold">Nouvelle Demande</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
             <div className="grid gap-2">
               <Label htmlFor="leaveType">Type de Congé</Label>
               <Select value={leaveType} onValueChange={setLeaveType}>
-                <SelectTrigger id="leaveType">
+                <SelectTrigger id="leaveType" className="button-hover-effect">
                   <SelectValue placeholder="Sélectionner un type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -103,7 +104,7 @@ const LeaveRequestsPage = () => {
                   <Button
                     variant={"outline"}
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal button-hover-effect",
                       !startDate && "text-muted-foreground"
                     )}
                   >
@@ -111,7 +112,7 @@ const LeaveRequestsPage = () => {
                     {startDate ? format(startDate, "PPP", { locale: fr }) : <span>Choisir une date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0 bg-card text-card-foreground border border-border rounded-md shadow-lg">
                   <Calendar
                     mode="single"
                     selected={startDate}
@@ -130,7 +131,7 @@ const LeaveRequestsPage = () => {
                   <Button
                     variant={"outline"}
                     className={cn(
-                      "w-full justify-start text-left font-normal",
+                      "w-full justify-start text-left font-normal button-hover-effect",
                       !endDate && "text-muted-foreground"
                     )}
                     disabled={!startDate}
@@ -139,7 +140,7 @@ const LeaveRequestsPage = () => {
                     {endDate ? format(endDate, "PPP", { locale: fr }) : <span>Choisir une date</span>}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0">
+                <PopoverContent className="w-auto p-0 bg-card text-card-foreground border border-border rounded-md shadow-lg">
                   <Calendar
                     mode="single"
                     selected={endDate}
@@ -159,10 +160,11 @@ const LeaveRequestsPage = () => {
                 placeholder="Décrivez la raison de votre absence/congé..."
                 value={reason}
                 onChange={(e) => setReason(e.target.value)}
+                className="border-border focus-visible:ring-ring focus-visible:ring-offset-background"
               />
             </div>
 
-            <Button type="submit" className="md:col-span-2" disabled={isCreatingLeaveRequest}>
+            <Button type="submit" className="md:col-span-2 button-hover-effect" disabled={isCreatingLeaveRequest}>
               {isCreatingLeaveRequest ? 'Soumission en cours...' : 'Soumettre la Demande'}
             </Button>
           </form>
@@ -170,9 +172,9 @@ const LeaveRequestsPage = () => {
       </Card>
 
       {/* Pending Requests (for managers/approvers) */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Demandes en Attente</CardTitle>
+          <CardTitle className="text-xl font-semibold">Demandes en Attente</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingPendingLeaveRequests ? (
@@ -208,6 +210,7 @@ const LeaveRequestsPage = () => {
                             size="sm"
                             onClick={() => handleApprove(request.id)}
                             disabled={isUpdatingLeaveRequestStatus}
+                            className="button-hover-effect"
                           >
                             Approuver
                           </Button>
@@ -216,6 +219,7 @@ const LeaveRequestsPage = () => {
                             size="sm"
                             onClick={() => handleReject(request.id)}
                             disabled={isUpdatingLeaveRequestStatus}
+                            className="button-hover-effect"
                           >
                             Rejeter
                           </Button>
@@ -233,9 +237,9 @@ const LeaveRequestsPage = () => {
       </Card>
 
       {/* History */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Historique de Mes Demandes</CardTitle>
+          <CardTitle className="text-xl font-semibold">Historique de Mes Demandes</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoadingUserLeaveRequests ? (

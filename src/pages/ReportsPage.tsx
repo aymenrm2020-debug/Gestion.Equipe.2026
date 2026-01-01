@@ -28,22 +28,22 @@ const ReportsPage = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Rapports & Analyses</h1>
-      <p className="text-lg text-gray-600 dark:text-gray-400">
+      <h1 className="text-3xl font-bold text-foreground">Rapports & Analyses</h1>
+      <p className="text-lg text-muted-foreground">
         Générez des rapports détaillés et des analyses.
       </p>
 
       {/* Filters */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Filtres de Rapport</CardTitle>
+          <CardTitle className="text-xl font-semibold">Filtres de Rapport</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="grid gap-2">
               <Label htmlFor="select-month">Mois</Label>
               <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-                <SelectTrigger id="select-month">
+                <SelectTrigger id="select-month" className="button-hover-effect">
                   <SelectValue placeholder="Sélectionner un mois" />
                 </SelectTrigger>
                 <SelectContent>
@@ -58,7 +58,7 @@ const ReportsPage = () => {
             <div className="grid gap-2">
               <Label htmlFor="select-year">Année</Label>
               <Select value={selectedYear} onValueChange={setSelectedYear}>
-                <SelectTrigger id="select-year">
+                <SelectTrigger id="select-year" className="button-hover-effect">
                   <SelectValue placeholder="Sélectionner une année" />
                 </SelectTrigger>
                 <SelectContent>
@@ -75,9 +75,9 @@ const ReportsPage = () => {
       </Card>
 
       {/* Monthly Attendance Report */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Rapport de Présence Mensuel</CardTitle>
+          <CardTitle className="text-xl font-semibold">Rapport de Présence Mensuel</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (
@@ -116,9 +116,9 @@ const ReportsPage = () => {
       </Card>
 
       {/* Monthly Leave Report */}
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Rapport de Congés Mensuel</CardTitle>
+          <CardTitle className="text-xl font-semibold">Rapport de Congés Mensuel</CardTitle>
         </CardHeader>
         <CardContent>
           {isLoading ? (

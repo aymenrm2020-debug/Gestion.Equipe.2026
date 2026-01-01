@@ -37,14 +37,14 @@ const ProfileSettingsPage = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Paramètres du Profil</h1>
-      <p className="text-lg text-gray-600 dark:text-gray-400">
+      <h1 className="text-3xl font-bold text-foreground">Paramètres du Profil</h1>
+      <p className="text-lg text-muted-foreground">
         Mettez à jour vos informations personnelles.
       </p>
 
-      <Card className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-md">
+      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-gray-900 dark:text-white">Mon Profil</CardTitle>
+          <CardTitle className="text-xl font-semibold">Mon Profil</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="grid gap-6">
@@ -63,6 +63,7 @@ const ProfileSettingsPage = () => {
                   placeholder="https://example.com/avatar.jpg"
                   value={avatarUrl}
                   onChange={(e) => setAvatarUrl(e.target.value)}
+                  className="border-border focus-visible:ring-ring focus-visible:ring-offset-background"
                 />
               </div>
             </div>
@@ -74,6 +75,7 @@ const ProfileSettingsPage = () => {
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
                 required
+                className="border-border focus-visible:ring-ring focus-visible:ring-offset-background"
               />
             </div>
 
@@ -84,10 +86,11 @@ const ProfileSettingsPage = () => {
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
                 required
+                className="border-border focus-visible:ring-ring focus-visible:ring-offset-background"
               />
             </div>
 
-            <Button type="submit" disabled={isUpdatingUserProfile}>
+            <Button type="submit" disabled={isUpdatingUserProfile} className="button-hover-effect">
               {isUpdatingUserProfile ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
               Enregistrer les modifications
             </Button>

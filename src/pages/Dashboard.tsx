@@ -26,8 +26,8 @@ const Dashboard = () => {
 
   if (sessionLoading || dashboardDataLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100 dark:bg-gray-900">
-        <p className="text-lg text-gray-700 dark:text-gray-300">Chargement du tableau de bord...</p>
+      <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
+        <p className="text-lg">Chargement du tableau de bord...</p>
       </div>
     );
   }
@@ -38,15 +38,15 @@ const Dashboard = () => {
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+      <h1 className="text-3xl font-bold text-foreground">
         Bienvenue, {user?.email}!
       </h1>
-      <p className="text-lg text-gray-600 dark:text-gray-400">
-        Vue d'ensemble de votre équipe logistique.
+      <p className="text-lg text-muted-foreground">
+        Vue d'overview de votre équipe logistique.
       </p>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="card-hover-effect">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Employés</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -60,7 +60,7 @@ const Dashboard = () => {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-hover-effect">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Présents Aujourd'hui</CardTitle>
             <CalendarCheck className="h-4 w-4 text-muted-foreground" />
@@ -74,7 +74,7 @@ const Dashboard = () => {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-hover-effect">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Heures Supplémentaires (Mois)</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -88,7 +88,7 @@ const Dashboard = () => {
             </p>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="card-hover-effect">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Tendances Mensuelles</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -104,7 +104,7 @@ const Dashboard = () => {
 
       {/* Placeholder for charts and alerts */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
+        <Card className="col-span-4 card-hover-effect">
           <CardHeader>
             <CardTitle>Statistiques de Présence Mensuelles</CardTitle>
           </CardHeader>
@@ -115,7 +115,7 @@ const Dashboard = () => {
             </div>
           </CardContent>
         </Card>
-        <Card className="col-span-3">
+        <Card className="col-span-3 card-hover-effect">
           <CardHeader>
             <CardTitle>Alertes Récentes</CardTitle>
           </CardHeader>
