@@ -14,6 +14,7 @@ import LeaveRequestsPage from "./pages/LeaveRequestsPage";
 import OvertimePage from "./pages/OvertimePage";
 import TeamManagementPage from "./pages/TeamManagementPage";
 import ReportsPage from "./pages/ReportsPage";
+import ProfileSettingsPage from "./pages/ProfileSettingsPage"; // Import the new ProfileSettingsPage
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="/overtime" element={<OvertimePage />} />
               <Route path="/team-management" element={<TeamManagementPage />} />
               <Route path="/reports" element={<ReportsPage />} />
+              <Route path="/profile-settings" element={<ProfileSettingsPage />} /> {/* New route */}
             </Route>
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

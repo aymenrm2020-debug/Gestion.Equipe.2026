@@ -44,6 +44,16 @@ export const getProfilesWithTeams = async () => {
   return data;
 };
 
+export const getProfileById = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('*, teams(id, name)')
+    .eq('id', userId)
+    .single();
+  if (error) throw error;
+  return data;
+};
+
 export const updateProfile = async (id: string, updates: Partial<Omit<Profile, 'id' | 'updated_at'>>) => {
   const { data, error } = await supabase
     .from('profiles')

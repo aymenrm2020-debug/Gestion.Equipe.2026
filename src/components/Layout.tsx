@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { MenuIcon, Home, CalendarDays, Clock, Briefcase, Hourglass, Users, BarChart3 } from 'lucide-react';
+import { MenuIcon, Home, CalendarDays, Clock, Briefcase, Hourglass, Users, BarChart3, Settings } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 import { MadeWithDyad } from './made-with-dyad';
 import { signOut } from '@/integrations/supabase/auth';
@@ -48,6 +48,7 @@ const SidebarNav: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
       <NavLink to="/overtime" icon={Hourglass} label="Heures Supplémentaires" isMobile={isMobile} />
       <NavLink to="/team-management" icon={Users} label="Gestion d'Équipe" isMobile={isMobile} />
       <NavLink to="/reports" icon={BarChart3} label="Rapports & Analyses" isMobile={isMobile} />
+      <NavLink to="/profile-settings" icon={Settings} label="Paramètres du Profil" isMobile={isMobile} /> {/* New link */}
       <Button onClick={handleSignOut} className="mt-4 w-full">
         Déconnexion
       </Button>
