@@ -8,8 +8,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useTeamManagement } from '@/hooks/use-team-management';
 import { Profile } from '@/integrations/supabase/teams';
-import { Loader2 } from 'lucide-react';
-import { showError } from '@/utils/toast';
+import { Loader2, UserPlus } from 'lucide-react';
+import { showError, showSuccess } from '@/utils/toast';
+import { signUpWithEmail } from '@/integrations/supabase/auth'; // Import signUp function
 
 const TeamManagementPage = () => {
   const {
@@ -31,6 +32,13 @@ const TeamManagementPage = () => {
   const [editedLastName, setEditedLastName] = useState('');
   const [editedTeamId, setEditedTeamId] = useState<string | null>(null);
   const [isProfileDialogOpen, setIsProfileDialogOpen] = useState(false);
+
+  const [isRegisterEmployeeDialogOpen, setIsRegisterEmployeeDialogOpen] = useState(false);
+  const [newEmployeeEmail, setNewEmployeeEmail] = useState('');
+  const [newEmployeePassword, setNewEmployeePassword] = useState('');
+  const [newEmployeeFirstName, setNewEmployeeFirstName] = useState('');
+  const [newEmployeeLastName, setNewEmployeeLastName] = useState('');
+  const [isRegisteringEmployee, setIsRegisteringEmployee] = useState(false);
 
   const handleCreateTeam = (e: React.FormEvent) => {
     e.preventDefault();
@@ -67,6 +75,31 @@ const TeamManagementPage = () => {
     }
   };
 
+  const handleRegisterEmployee = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newEmployeeEmail || !newEmployeePassword || !newEmployeeFirstName || !newEmployeeLastName) {
+      showError('Veuillez remplir tous les champs pour le nouvel employé.');
+      return;
+    }
+
+    setIsRegisteringEmployee(true);
+    try {
+      await signUpWithEmail(newEmployeeEmail, newEmployeePassword, newEmployeeFirstName, newEmployeeLastName);
+      showSuccess('Nouvel employé enregistré avec succès !');
+      setNewEmployeeEmail('');
+      setNewEmployeePassword('');
+      setNewEmployeeFirstName('');
+      setNewEmployeeLastName('');
+      setIsRegisterEmployeeDialogOpen(false);
+      // Invalidate profiles query to refetch the list with the new employee
+      // This is handled by useTeamManagement's internal query client invalidation
+    } catch (error: any) {
+      showError(`Erreur lors de l'enregistrement de l'employé: ${error.message}`);
+    } finally {
+      setIsRegisteringEmployee(false);
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-3xl font-bold text-foreground">Gestion d'Équipe</h1>
@@ -78,6 +111,76 @@ const TeamManagementPage = () => {
       <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-semibold">Profils des Employés</CardTitle>
+          <Dialog open={isRegisterEmployeeDialogOpen} onOpenChange={setIsRegisterEmployeeDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="button-hover-effect">
+                <UserPlus className="mr-2 h-4 w-4" /> Enregistrer un Employé
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="bg-card text-card-foreground border border-border rounded-md shadow-lg">
+              <DialogHeader>
+                <DialogTitle>Enregistrer un Nouvel Employé</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleRegisterEmployee} className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="newEmployeeEmail" className="text-right">
+                    Email
+                  </Label>
+                  <Input
+                    id="newEmployeeEmail"
+                    type="email"
+                    value={newEmployeeEmail}
+                    onChange={(e) => setNewEmployeeEmail(e.target.value)}
+                    className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="newEmployeePassword" className="text-right">
+                    Mot de passe
+                  </Label>
+                  <Input
+                    id="newEmployeePassword"
+                    type="password"
+                    value={newEmployeePassword}
+                    onChange={(e) => setNewEmployeePassword(e.target.value)}
+                    className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="newEmployeeFirstName" className="text-right">
+                    Prénom
+                  </Label>
+                  <Input
+                    id="newEmployeeFirstName"
+                    value={newEmployeeFirstName}
+                    onChange={(e) => setNewEmployeeFirstName(e.target.value)}
+                    className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="newEmployeeLastName" className="text-right">
+                    Nom
+                  </Label>
+                  <Input
+                    id="newEmployeeLastName"
+                    value={newEmployeeLastName}
+                    onChange={(e) => setNewEmployeeLastName(e.target.value)}
+                    className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
+                    required
+                  />
+                </div>
+                <DialogFooter>
+                  <Button type="submit" disabled={isRegisteringEmployee} className="button-hover-effect">
+                    {isRegisteringEmployee ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Enregistrer
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </CardHeader>
         <CardContent>
           {isLoadingProfiles ? (
