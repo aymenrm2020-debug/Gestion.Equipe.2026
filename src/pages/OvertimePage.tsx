@@ -14,6 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useOvertime } from '@/hooks/use-overtime';
 import { useSession } from '@/components/SessionContextProvider';
 import { showError } from '@/utils/toast';
+import { Overtime } from '@/integrations/supabase/overtime'; // Import Overtime interface
 
 const OvertimePage = () => {
   const { user } = useSession();
@@ -25,7 +26,8 @@ const OvertimePage = () => {
     createOvertime,
     isCreatingOvertime,
     approveOvertime,
-    isApprovingOvertime,
+    rejectOvertime,
+    isUpdatingOvertimeStatus,
   } = useOvertime();
 
   const [overtimeDate, setOvertimeDate] = useState<Date | undefined>(undefined);
@@ -54,7 +56,13 @@ const OvertimePage = () => {
 
   const handleApprove = (overtimeId: string) => {
     if (user?.id) {
-      approveOvertime({ overtimeId, approvedByUserId: user.id });
+      approveOvertime(overtimeId);
+    }
+  };
+
+  const handleReject = (overtimeId: string) => {
+    if (user?.id) {
+      rejectOvertime(overtimeId);
     }
   };
 
@@ -151,22 +159,33 @@ const OvertimePage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {pendingOvertimeRequests.map((request: any) => ( // TODO: Type this properly
+                  {pendingOvertimeRequests.map((request: Overtime & { profiles: { first_name: string, last_name: string }[] }) => (
                     <TableRow key={request.id}>
-                      <TableCell>{request.profiles?.first_name} {request.profiles?.last_name}</TableCell>
+                      <TableCell>{request.profiles?.[0]?.first_name} {request.profiles?.[0]?.last_name}</TableCell>
                       <TableCell>{format(new Date(request.date), 'dd/MM/yyyy', { locale: fr })}</TableCell>
                       <TableCell>{request.hours}h</TableCell>
                       <TableCell className="max-w-[200px] truncate">{request.notes || '-'}</TableCell>
                       <TableCell>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleApprove(request.id)}
-                          disabled={isApprovingOvertime}
-                          className="button-hover-effect"
-                        >
-                          Approuver
-                        </Button>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleApprove(request.id!)}
+                            disabled={isUpdatingOvertimeStatus}
+                            className="button-hover-effect"
+                          >
+                            Approuver
+                          </Button>
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleReject(request.id!)}
+                            disabled={isUpdatingOvertimeStatus}
+                            className="button-hover-effect"
+                          >
+                            Rejeter
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}
@@ -207,9 +226,11 @@ const OvertimePage = () => {
                       <TableCell className="max-w-[200px] truncate">{request.notes || '-'}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          request.approved_by_user_id ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                          request.status === 'approved' ? 'bg-green-100 text-green-800' :
+                          request.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {request.approved_by_user_id ? 'Approuvé' : 'En attente'}
+                          {request.status === 'pending' ? 'En attente' : request.status === 'approved' ? 'Approuvé' : 'Rejeté'}
                         </span>
                       </TableCell>
                       <TableCell>{request.approved_by_user_id || '-'}</TableCell>

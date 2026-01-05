@@ -9,12 +9,13 @@ export interface Overtime {
   approved_at?: string;
   notes?: string;
   created_at?: string;
+  status?: 'pending' | 'approved' | 'rejected'; // Added status field
 }
 
-export const createOvertimeRequest = async (request: Omit<Overtime, 'id' | 'approved_by_user_id' | 'approved_at' | 'created_at'>) => {
+export const createOvertimeRequest = async (request: Omit<Overtime, 'id' | 'approved_by_user_id' | 'approved_at' | 'created_at' | 'status'>) => {
   const { data, error } = await supabase
     .from('overtime')
-    .insert(request)
+    .insert({ ...request, status: 'pending' }) // Default status to pending
     .select()
     .single();
   if (error) throw error;
@@ -35,16 +36,25 @@ export const getPendingOvertimeRequests = async () => {
   const { data, error } = await supabase
     .from('overtime')
     .select('*, profiles(first_name, last_name)')
-    .is('approved_by_user_id', null) // Assuming null means pending approval
+    .eq('status', 'pending') // Filter by pending status
     .order('date', { ascending: true });
   if (error) throw error;
   return data;
 };
 
-export const updateOvertimeStatus = async (overtimeId: string, approvedByUserId: string) => {
+export const updateOvertimeStatus = async (overtimeId: string, status: 'approved' | 'rejected', approvedByUserId?: string) => {
+  const updates: Partial<Overtime> = { status };
+  if (status === 'approved') {
+    updates.approved_by_user_id = approvedByUserId;
+    updates.approved_at = new Date().toISOString();
+  } else if (status === 'rejected') {
+    updates.approved_by_user_id = approvedByUserId; // Optionally record who rejected
+    updates.approved_at = new Date().toISOString(); // Optionally record when rejected
+  }
+
   const { data, error } = await supabase
     .from('overtime')
-    .update({ approved_by_user_id: approvedByUserId, approved_at: new Date().toISOString() })
+    .update(updates)
     .eq('id', overtimeId)
     .select()
     .single();

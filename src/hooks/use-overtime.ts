@@ -20,7 +20,7 @@ export const useOvertime = () => {
   });
 
   const createOvertimeMutation = useMutation({
-    mutationFn: (request: Omit<Overtime, 'id' | 'approved_by_user_id' | 'approved_at' | 'created_at'>) => createOvertimeRequest({ ...request, user_id: user!.id }),
+    mutationFn: (request: Omit<Overtime, 'id' | 'approved_by_user_id' | 'approved_at' | 'created_at' | 'status'>) => createOvertimeRequest({ ...request, user_id: user!.id }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userOvertimeRequests', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['pendingOvertimeRequests'] });
@@ -32,16 +32,20 @@ export const useOvertime = () => {
     },
   });
 
-  const approveOvertimeMutation = useMutation({
-    mutationFn: ({ overtimeId, approvedByUserId }: { overtimeId: string, approvedByUserId: string }) => updateOvertimeStatus(overtimeId, approvedByUserId),
-    onSuccess: () => {
+  const updateOvertimeStatusMutation = useMutation({
+    mutationFn: ({ overtimeId, status, approvedByUserId }: { overtimeId: string, status: 'approved' | 'rejected', approvedByUserId: string }) => updateOvertimeStatus(overtimeId, status, approvedByUserId),
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['userOvertimeRequests', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['pendingOvertimeRequests'] });
       queryClient.invalidateQueries({ queryKey: ['monthlyOvertime'] }); // Invalidate dashboard data
-      showSuccess('Heures supplémentaires approuvées !');
+      if (variables.status === 'approved') {
+        showSuccess('Heures supplémentaires approuvées !');
+      } else {
+        showSuccess('Heures supplémentaires rejetées !');
+      }
     },
     onError: (error) => {
-      showError(`Erreur lors de l'approbation des heures supplémentaires: ${error.message}`);
+      showError(`Erreur lors de la mise à jour des heures supplémentaires: ${error.message}`);
     },
   });
 
@@ -52,7 +56,8 @@ export const useOvertime = () => {
     isLoadingPendingOvertimeRequests,
     createOvertime: createOvertimeMutation.mutate,
     isCreatingOvertime: createOvertimeMutation.isPending,
-    approveOvertime: approveOvertimeMutation.mutate,
-    isApprovingOvertime: approveOvertimeMutation.isPending,
+    approveOvertime: (overtimeId: string) => updateOvertimeStatusMutation.mutate({ overtimeId, status: 'approved', approvedByUserId: user!.id }),
+    rejectOvertime: (overtimeId: string) => updateOvertimeStatusMutation.mutate({ overtimeId, status: 'rejected', approvedByUserId: user!.id }),
+    isUpdatingOvertimeStatus: updateOvertimeStatusMutation.isPending,
   };
 };
