@@ -15,10 +15,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useLeaveRequests } from '@/hooks/use-leave-requests';
 import { useSession } from '@/components/SessionContextProvider';
 import { showError } from '@/utils/toast';
-import { LeaveRequest } from '@/integrations/supabase/leaveRequests'; // Import LeaveRequest interface
+import { LeaveRequest } from '@/integrations/supabase/leaveRequests';
+import { useUserRole } from '@/hooks/use-user-role'; // Import useUserRole
 
 const LeaveRequestsPage = () => {
   const { user } = useSession();
+  const { isAdmin, isManager, isLoading: isLoadingRole } = useUserRole(); // Get user role
   const {
     userLeaveRequests,
     pendingLeaveRequests,
@@ -98,6 +100,14 @@ const LeaveRequestsPage = () => {
   const handleCancel = (requestId: string) => {
     cancelLeaveRequest(requestId);
   };
+
+  if (isLoadingRole) {
+    return (
+      <div className="flex items-center justify-center h-64 text-muted-foreground">
+        Chargement des permissions...
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -244,77 +254,81 @@ const LeaveRequestsPage = () => {
         </CardContent>
       </Card>
 
-      {/* Pending Requests (for managers/approvers) */}
-      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">Demandes en Attente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoadingPendingLeaveRequests ? (
-            <p className="text-muted-foreground">Chargement des demandes en attente...</p>
-          ) : pendingLeaveRequests && pendingLeaveRequests.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Employé</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Dates</TableHead>
-                    <TableHead>Durée</TableHead>
-                    <TableHead>Raison</TableHead>
-                    <TableHead>Demandé le</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingLeaveRequests.map((request: any) => ( // TODO: Type this properly
-                    <TableRow key={request.id}>
-                      <TableCell>{request.profiles?.first_name} {request.profiles?.last_name}</TableCell>
-                      <TableCell>{request.type}</TableCell>
-                      <TableCell>
-                        {format(new Date(request.start_date), 'dd/MM/yyyy', { locale: fr })}
-                        {request.end_date && ` - ${format(new Date(request.end_date), 'dd/MM/yyyy', { locale: fr })}`}
-                      </TableCell>
-                      <TableCell>
-                        {request.duration_type === 'hourly' ? `${request.start_time?.substring(0, 5)} - ${request.end_time?.substring(0, 5)}` :
-                         request.duration_type === 'half_day_morning' ? 'Demi-journée (Matin)' :
-                         request.duration_type === 'half_day_afternoon' ? 'Demi-journée (Après-midi)' :
-                         'Journée complète'}
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate">{request.reason || '-'}</TableCell>
-                      <TableCell>{format(new Date(request.requested_at), 'dd/MM/yyyy HH:mm', { locale: fr })}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleApprove(request.id)}
-                            disabled={isUpdatingLeaveRequestStatus}
-                            className="button-hover-effect"
-                          >
-                            Approuver
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleReject(request.id)}
-                            disabled={isUpdatingLeaveRequestStatus}
-                            className="button-hover-effect"
-                          >
-                            Rejeter
-                          </Button>
-                        </div>
-                      </TableCell>
+      {(isAdmin || isManager) && ( // Only show for admins and managers
+        <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Demandes en Attente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingPendingLeaveRequests ? (
+              <p className="text-muted-foreground">Chargement des demandes en attente...</p>
+            ) : pendingLeaveRequests && pendingLeaveRequests.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Employé</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Dates</TableHead>
+                      <TableHead>Durée</TableHead>
+                      <TableHead>Raison</TableHead>
+                      <TableHead>Demandé le</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">Aucune demande en attente.</p>
-          )}
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingLeaveRequests.map((request: any) => (
+                      <TableRow key={request.id}>
+                        <TableCell>{request.profiles?.first_name} {request.profiles?.last_name}</TableCell>
+                        <TableCell>
+                          {request.type}
+                          {request.type === 'sick_leave' && <span className="ml-2 px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">Maladie</span>}
+                        </TableCell>
+                        <TableCell>
+                          {format(new Date(request.start_date), 'dd/MM/yyyy', { locale: fr })}
+                          {request.end_date && ` - ${format(new Date(request.end_date), 'dd/MM/yyyy', { locale: fr })}`}
+                        </TableCell>
+                        <TableCell>
+                          {request.duration_type === 'hourly' ? `${request.start_time?.substring(0, 5)} - ${request.end_time?.substring(0, 5)}` :
+                           request.duration_type === 'half_day_morning' ? 'Demi-journée (Matin)' :
+                           request.duration_type === 'half_day_afternoon' ? 'Demi-journée (Après-midi)' :
+                           'Journée complète'}
+                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">{request.reason || '-'}</TableCell>
+                        <TableCell>{format(new Date(request.requested_at), 'dd/MM/yyyy HH:mm', { locale: fr })}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleApprove(request.id)}
+                              disabled={isUpdatingLeaveRequestStatus}
+                              className="button-hover-effect"
+                            >
+                              Approuver
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleReject(request.id)}
+                              disabled={isUpdatingLeaveRequestStatus}
+                              className="button-hover-effect"
+                            >
+                              Rejeter
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Aucune demande en attente.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* History */}
       <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
@@ -341,7 +355,10 @@ const LeaveRequestsPage = () => {
                 <TableBody>
                   {userLeaveRequests.map((request) => (
                     <TableRow key={request.id}>
-                      <TableCell>{request.type}</TableCell>
+                      <TableCell>
+                        {request.type}
+                        {request.type === 'sick_leave' && <span className="ml-2 px-2 py-1 rounded-full text-xs bg-red-100 text-red-800">Maladie</span>}
+                      </TableCell>
                       <TableCell>
                         {format(new Date(request.start_date), 'dd/MM/yyyy', { locale: fr })}
                         {request.end_date && ` - ${format(new Date(request.end_date), 'dd/MM/yyyy', { locale: fr })}`}

@@ -8,6 +8,7 @@ import { MadeWithDyad } from './made-with-dyad';
 import { signOut } from '@/integrations/supabase/auth';
 import { showSuccess, showError } from '@/utils/toast';
 import { useNavigate } from 'react-router-dom';
+import { useUserRole } from '@/hooks/use-user-role'; // Import useUserRole
 
 interface NavLinkProps {
   to: string;
@@ -28,6 +29,7 @@ const NavLink: React.FC<NavLinkProps> = ({ to, icon: Icon, label, isMobile }) =>
 
 const SidebarNav: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
   const navigate = useNavigate();
+  const { role, isLoading: isLoadingRole } = useUserRole(); // Get user role
 
   const handleSignOut = async () => {
     try {
@@ -39,6 +41,10 @@ const SidebarNav: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
     }
   };
 
+  if (isLoadingRole) {
+    return <div className="px-4 py-2 text-muted-foreground">Chargement du menu...</div>;
+  }
+
   return (
     <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
       <NavLink to="/" icon={Home} label="Tableau de Bord" isMobile={isMobile} />
@@ -46,8 +52,14 @@ const SidebarNav: React.FC<{ isMobile?: boolean }> = ({ isMobile }) => {
       <NavLink to="/attendance" icon={Clock} label="Pointage" isMobile={isMobile} />
       <NavLink to="/leave-requests" icon={Briefcase} label="Absences & Congés" isMobile={isMobile} />
       <NavLink to="/overtime" icon={Hourglass} label="Heures Supplémentaires" isMobile={isMobile} />
-      <NavLink to="/team-management" icon={Users} label="Gestion d'Équipe" isMobile={isMobile} />
-      <NavLink to="/reports" icon={BarChart3} label="Rapports & Analyses" isMobile={isMobile} />
+      
+      {(role === 'admin' || role === 'manager') && (
+        <>
+          <NavLink to="/team-management" icon={Users} label="Gestion d'Équipe" isMobile={isMobile} />
+          <NavLink to="/reports" icon={BarChart3} label="Rapports & Analyses" isMobile={isMobile} />
+        </>
+      )}
+      
       <NavLink to="/profile-settings" icon={Settings} label="Paramètres du Profil" isMobile={isMobile} />
       <Button onClick={handleSignOut} className="mt-4 w-full button-hover-effect">
         Déconnexion

@@ -14,10 +14,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { useOvertime } from '@/hooks/use-overtime';
 import { useSession } from '@/components/SessionContextProvider';
 import { showError } from '@/utils/toast';
-import { Overtime } from '@/integrations/supabase/overtime'; // Import Overtime interface
+import { Overtime } from '@/integrations/supabase/overtime';
+import { useUserRole } from '@/hooks/use-user-role'; // Import useUserRole
 
 const OvertimePage = () => {
   const { user } = useSession();
+  const { isAdmin, isManager, isLoading: isLoadingRole } = useUserRole(); // Get user role
   const {
     userOvertimeRequests,
     pendingOvertimeRequests,
@@ -65,6 +67,14 @@ const OvertimePage = () => {
       rejectOvertime(overtimeId);
     }
   };
+
+  if (isLoadingRole) {
+    return (
+      <div className="flex items-center justify-center h-64 text-muted-foreground">
+        Chargement des permissions...
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -138,65 +148,66 @@ const OvertimePage = () => {
         </CardContent>
       </Card>
 
-      {/* Pending Overtime Requests (for managers/approvers) */}
-      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
-        <CardHeader>
-          <CardTitle className="text-xl font-semibold">Demandes en Attente</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {isLoadingPendingOvertimeRequests ? (
-            <p className="text-muted-foreground">Chargement des demandes en attente...</p>
-          ) : pendingOvertimeRequests && pendingOvertimeRequests.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Employé</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Heures</TableHead>
-                    <TableHead>Notes</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {pendingOvertimeRequests.map((request: Overtime & { profiles: { first_name: string, last_name: string }[] }) => (
-                    <TableRow key={request.id}>
-                      <TableCell>{request.profiles?.[0]?.first_name} {request.profiles?.[0]?.last_name}</TableCell>
-                      <TableCell>{format(new Date(request.date), 'dd/MM/yyyy', { locale: fr })}</TableCell>
-                      <TableCell>{request.hours}h</TableCell>
-                      <TableCell className="max-w-[200px] truncate">{request.notes || '-'}</TableCell>
-                      <TableCell>
-                        <div className="flex gap-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleApprove(request.id!)}
-                            disabled={isUpdatingOvertimeStatus}
-                            className="button-hover-effect"
-                          >
-                            Approuver
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleReject(request.id!)}
-                            disabled={isUpdatingOvertimeStatus}
-                            className="button-hover-effect"
-                          >
-                            Rejeter
-                          </Button>
-                        </div>
-                      </TableCell>
+      {(isAdmin || isManager) && ( // Only show for admins and managers
+        <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">Demandes en Attente</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isLoadingPendingOvertimeRequests ? (
+              <p className="text-muted-foreground">Chargement des demandes en attente...</p>
+            ) : pendingOvertimeRequests && pendingOvertimeRequests.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Employé</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Heures</TableHead>
+                      <TableHead>Notes</TableHead>
+                      <TableHead>Actions</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">Aucune demande en attente.</p>
-          )}
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {pendingOvertimeRequests.map((request: Overtime & { profiles: { first_name: string, last_name: string }[] }) => (
+                      <TableRow key={request.id}>
+                        <TableCell>{request.profiles?.[0]?.first_name} {request.profiles?.[0]?.last_name}</TableCell>
+                        <TableCell>{format(new Date(request.date), 'dd/MM/yyyy', { locale: fr })}</TableCell>
+                        <TableCell>{request.hours}h</TableCell>
+                        <TableCell className="max-w-[200px] truncate">{request.notes || '-'}</TableCell>
+                        <TableCell>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleApprove(request.id!)}
+                              disabled={isUpdatingOvertimeStatus}
+                              className="button-hover-effect"
+                            >
+                              Approuver
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleReject(request.id!)}
+                              disabled={isUpdatingOvertimeStatus}
+                              className="button-hover-effect"
+                            >
+                              Rejeter
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Aucune demande en attente.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* History */}
       <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">

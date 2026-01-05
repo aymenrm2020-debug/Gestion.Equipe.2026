@@ -14,6 +14,7 @@ export interface Profile {
   updated_at: string | null;
   team_id: string | null;
   teams?: Team; // Joined team data
+  role: 'admin' | 'manager' | 'employee'; // Added role field
 }
 
 export const getTeams = async () => {

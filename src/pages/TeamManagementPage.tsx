@@ -11,10 +11,12 @@ import { Profile } from '@/integrations/supabase/teams';
 import { Loader2, UserPlus } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
 import { signUpWithEmail } from '@/integrations/supabase/auth';
-import { useQueryClient } from '@tanstack/react-query'; // Import useQueryClient
+import { useQueryClient } from '@tanstack/react-query';
+import { useUserRole } from '@/hooks/use-user-role'; // Import useUserRole
 
 const TeamManagementPage = () => {
-  const queryClient = useQueryClient(); // Get queryClient instance
+  const queryClient = useQueryClient();
+  const { isAdmin, isLoading: isLoadingRole } = useUserRole(); // Get user role
   const {
     teams,
     profiles,
@@ -88,8 +90,7 @@ const TeamManagementPage = () => {
     try {
       await signUpWithEmail(newEmployeeEmail, newEmployeePassword, newEmployeeFirstName, newEmployeeLastName);
       showSuccess('Nouvel employé enregistré avec succès !');
-      // Invalidate the profiles query to refetch the list with the new employee
-      queryClient.invalidateQueries({ queryKey: ['profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['profiles'] }); // Invalidate to refetch profiles
       setNewEmployeeEmail('');
       setNewEmployeePassword('');
       setNewEmployeeFirstName('');
@@ -102,6 +103,14 @@ const TeamManagementPage = () => {
     }
   };
 
+  if (isLoadingRole) {
+    return (
+      <div className="flex items-center justify-center h-64 text-muted-foreground">
+        <Loader2 className="h-6 w-6 animate-spin mr-2" /> Chargement des permissions...
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-3xl font-bold text-foreground">Gestion d'Équipe</h1>
@@ -113,76 +122,78 @@ const TeamManagementPage = () => {
       <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-xl font-semibold">Profils des Employés</CardTitle>
-          <Dialog open={isRegisterEmployeeDialogOpen} onOpenChange={setIsRegisterEmployeeDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="button-hover-effect">
-                <UserPlus className="mr-2 h-4 w-4" /> Enregistrer un Employé
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card text-card-foreground border border-border rounded-md shadow-lg">
-              <DialogHeader>
-                <DialogTitle>Enregistrer un Nouvel Employé</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleRegisterEmployee} className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="newEmployeeEmail" className="text-right">
-                    Email
-                  </Label>
-                  <Input
-                    id="newEmployeeEmail"
-                    type="email"
-                    value={newEmployeeEmail}
-                    onChange={(e) => setNewEmployeeEmail(e.target.value)}
-                    className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="newEmployeePassword" className="text-right">
-                    Mot de passe
-                  </Label>
-                  <Input
-                    id="newEmployeePassword"
-                    type="password"
-                    value={newEmployeePassword}
-                    onChange={(e) => setNewEmployeePassword(e.target.value)}
-                    className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="newEmployeeFirstName" className="text-right">
-                    Prénom
-                  </Label>
-                  <Input
-                    id="newEmployeeFirstName"
-                    value={newEmployeeFirstName}
-                    onChange={(e) => setNewEmployeeFirstName(e.target.value)}
-                    className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
-                    required
-                  />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="newEmployeeLastName" className="text-right">
-                    Nom
-                  </Label>
-                  <Input
-                    id="newEmployeeLastName"
-                    value={newEmployeeLastName}
-                    onChange={(e) => setNewEmployeeLastName(e.target.value)}
-                    className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
-                    required
-                  />
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={isRegisteringEmployee} className="button-hover-effect">
-                    {isRegisteringEmployee ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Enregistrer
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+          {isAdmin && ( // Only show for admins
+            <Dialog open={isRegisterEmployeeDialogOpen} onOpenChange={setIsRegisterEmployeeDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="button-hover-effect">
+                  <UserPlus className="mr-2 h-4 w-4" /> Enregistrer un Employé
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card text-card-foreground border border-border rounded-md shadow-lg">
+                <DialogHeader>
+                  <DialogTitle>Enregistrer un Nouvel Employé</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleRegisterEmployee} className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="newEmployeeEmail" className="text-right">
+                      Email
+                    </Label>
+                    <Input
+                      id="newEmployeeEmail"
+                      type="email"
+                      value={newEmployeeEmail}
+                      onChange={(e) => setNewEmployeeEmail(e.target.value)}
+                      className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="newEmployeePassword" className="text-right">
+                      Mot de passe
+                    </Label>
+                    <Input
+                      id="newEmployeePassword"
+                      type="password"
+                      value={newEmployeePassword}
+                      onChange={(e) => setNewEmployeePassword(e.target.value)}
+                      className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="newEmployeeFirstName" className="text-right">
+                      Prénom
+                    </Label>
+                    <Input
+                      id="newEmployeeFirstName"
+                      value={newEmployeeFirstName}
+                      onChange={(e) => setNewEmployeeFirstName(e.target.value)}
+                      className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="newEmployeeLastName" className="text-right">
+                      Nom
+                    </Label>
+                    <Input
+                      id="newEmployeeLastName"
+                      value={newEmployeeLastName}
+                      onChange={(e) => setNewEmployeeLastName(e.target.value)}
+                      className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
+                      required
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" disabled={isRegisteringEmployee} className="button-hover-effect">
+                      {isRegisteringEmployee ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Enregistrer
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </CardHeader>
         <CardContent>
           {isLoadingProfiles ? (
@@ -197,7 +208,8 @@ const TeamManagementPage = () => {
                     <TableHead>Nom</TableHead>
                     <TableHead>Prénom</TableHead>
                     <TableHead>Équipe</TableHead>
-                    <TableHead>Actions</TableHead>
+                    <TableHead>Rôle</TableHead> {/* Display role */}
+                    {isAdmin && <TableHead>Actions</TableHead>} {/* Only show for admins */}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -206,11 +218,14 @@ const TeamManagementPage = () => {
                       <TableCell>{profile.last_name || '-'}</TableCell>
                       <TableCell>{profile.first_name || '-'}</TableCell>
                       <TableCell>{profile.teams?.name || 'Non assignée'}</TableCell>
-                      <TableCell>
-                        <Button variant="outline" size="sm" onClick={() => handleEditProfile(profile)} className="button-hover-effect">
-                          Modifier
-                        </Button>
-                      </TableCell>
+                      <TableCell>{profile.role}</TableCell> {/* Display role */}
+                      {isAdmin && ( // Only show for admins
+                        <TableCell>
+                          <Button variant="outline" size="sm" onClick={() => handleEditProfile(profile)} className="button-hover-effect">
+                            Modifier
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
                   ))}
                 </TableBody>
@@ -223,69 +238,71 @@ const TeamManagementPage = () => {
       </Card>
 
       {/* Team Management */}
-      <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-xl font-semibold">Gestion des Équipes</CardTitle>
-          <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="button-hover-effect">Créer une Équipe</Button>
-            </DialogTrigger>
-            <DialogContent className="bg-card text-card-foreground border border-border rounded-md shadow-lg">
-              <DialogHeader>
-                <DialogTitle>Créer une Nouvelle Équipe</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleCreateTeam} className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="newTeamName" className="text-right">
-                    Nom de l'équipe
-                  </Label>
-                  <Input
-                    id="newTeamName"
-                    value={newTeamName}
-                    onChange={(e) => setNewTeamName(e.target.value)}
-                    className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
-                    required
-                  />
-                </div>
-                <DialogFooter>
-                  <Button type="submit" disabled={isCreatingTeam} className="button-hover-effect">
-                    {isCreatingTeam ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Créer
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </CardHeader>
-        <CardContent>
-          {isLoadingTeams ? (
-            <div className="flex items-center justify-center h-32 text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin mr-2" /> Chargement des équipes...
-            </div>
-          ) : teams && teams.length > 0 ? (
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nom de l'équipe</TableHead>
-                    <TableHead>Créée le</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {teams.map((team) => (
-                    <TableRow key={team.id}>
-                      <TableCell>{team.name}</TableCell>
-                      <TableCell>{new Date(team.created_at).toLocaleDateString('fr-FR')}</TableCell>
+      {isAdmin && ( // Only show for admins
+        <Card className="bg-card text-card-foreground p-4 rounded-lg shadow-lg border border-border card-hover-effect">
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-xl font-semibold">Gestion des Équipes</CardTitle>
+            <Dialog open={isTeamDialogOpen} onOpenChange={setIsTeamDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="button-hover-effect">Créer une Équipe</Button>
+              </DialogTrigger>
+              <DialogContent className="bg-card text-card-foreground border border-border rounded-md shadow-lg">
+                <DialogHeader>
+                  <DialogTitle>Créer une Nouvelle Équipe</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleCreateTeam} className="grid gap-4 py-4">
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="newTeamName" className="text-right">
+                      Nom de l'équipe
+                    </Label>
+                    <Input
+                      id="newTeamName"
+                      value={newTeamName}
+                      onChange={(e) => setNewTeamName(e.target.value)}
+                      className="col-span-3 border-border focus-visible:ring-ring focus-visible:ring-offset-background"
+                      required
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" disabled={isCreatingTeam} className="button-hover-effect">
+                      {isCreatingTeam ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Créer
+                    </Button>
+                  </DialogFooter>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </CardHeader>
+          <CardContent>
+            {isLoadingTeams ? (
+              <div className="flex items-center justify-center h-32 text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin mr-2" /> Chargement des équipes...
+              </div>
+            ) : teams && teams.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nom de l'équipe</TableHead>
+                      <TableHead>Créée le</TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          ) : (
-            <p className="text-muted-foreground">Aucune équipe trouvée. Créez-en une !</p>
-          )}
-        </CardContent>
-      </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {teams.map((team) => (
+                      <TableRow key={team.id}>
+                        <TableCell>{team.name}</TableCell>
+                        <TableCell>{new Date(team.created_at).toLocaleDateString('fr-FR')}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <p className="text-muted-foreground">Aucune équipe trouvée. Créez-en une !</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Edit Profile Dialog */}
       <Dialog open={isProfileDialogOpen} onOpenChange={setIsProfileDialogOpen}>
@@ -336,6 +353,23 @@ const TeamManagementPage = () => {
                 </SelectContent>
               </Select>
             </div>
+            {isAdmin && ( // Only allow admins to change role
+              <div className="grid grid-cols-4 items-center gap-4">
+                <Label htmlFor="role" className="text-right">
+                  Rôle
+                </Label>
+                <Select value={editingProfile?.role || 'employee'} onValueChange={(value: 'admin' | 'manager' | 'employee') => setEditingProfile(prev => prev ? { ...prev, role: value } : null)}>
+                  <SelectTrigger id="role" className="col-span-3 button-hover-effect">
+                    <SelectValue placeholder="Sélectionner un rôle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="employee">Employé</SelectItem>
+                    <SelectItem value="manager">Manager</SelectItem>
+                    <SelectItem value="admin">Admin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <DialogFooter>
               <Button type="submit" disabled={isUpdatingProfile} className="button-hover-effect">
                 {isUpdatingProfile ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
