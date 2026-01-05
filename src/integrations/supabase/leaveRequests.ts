@@ -8,8 +8,9 @@ export interface LeaveRequest {
   end_date?: string;
   start_time?: string;
   end_time?: string;
+  duration_type?: 'full_day' | 'half_day_morning' | 'half_day_afternoon' | 'hourly'; // New field
   reason?: string;
-  status?: 'pending' | 'approved' | 'rejected';
+  status?: 'pending' | 'approved' | 'rejected' | 'cancelled'; // Added 'cancelled' status
   requested_at?: string;
   approved_by_user_id?: string;
   approved_at?: string;
@@ -45,10 +46,26 @@ export const getPendingLeaveRequests = async () => {
   return data;
 };
 
-export const updateLeaveRequestStatus = async (requestId: string, status: 'approved' | 'rejected', approvedByUserId: string) => {
+export const updateLeaveRequestStatus = async (requestId: string, status: 'approved' | 'rejected' | 'cancelled', approvedByUserId?: string) => {
+  const updates: { status: 'approved' | 'rejected' | 'cancelled'; approved_by_user_id?: string; approved_at?: string } = { status };
+  if (status === 'approved' || status === 'rejected') {
+    updates.approved_by_user_id = approvedByUserId;
+    updates.approved_at = new Date().toISOString();
+  }
   const { data, error } = await supabase
     .from('leave_requests')
-    .update({ status, approved_by_user_id: approvedByUserId, approved_at: new Date().toISOString() })
+    .update(updates)
+    .eq('id', requestId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+};
+
+export const cancelLeaveRequest = async (requestId: string) => {
+  const { data, error } = await supabase
+    .from('leave_requests')
+    .update({ status: 'cancelled' })
     .eq('id', requestId)
     .select()
     .single();

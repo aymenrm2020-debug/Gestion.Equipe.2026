@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createLeaveRequest, getLeaveRequests, getPendingLeaveRequests, updateLeaveRequestStatus, LeaveRequest } from '@/integrations/supabase/leaveRequests';
+import { createLeaveRequest, getLeaveRequests, getPendingLeaveRequests, updateLeaveRequestStatus, cancelLeaveRequest, LeaveRequest } from '@/integrations/supabase/leaveRequests';
 import { useSession } from '@/components/SessionContextProvider';
 import { showSuccess, showError } from '@/utils/toast';
 
@@ -32,7 +32,7 @@ export const useLeaveRequests = () => {
   });
 
   const updateLeaveRequestStatusMutation = useMutation({
-    mutationFn: ({ requestId, status, approvedByUserId }: { requestId: string, status: 'approved' | 'rejected', approvedByUserId: string }) => updateLeaveRequestStatus(requestId, status, approvedByUserId),
+    mutationFn: ({ requestId, status, approvedByUserId }: { requestId: string, status: 'approved' | 'rejected' | 'cancelled', approvedByUserId?: string }) => updateLeaveRequestStatus(requestId, status, approvedByUserId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['userLeaveRequests', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['pendingLeaveRequests'] });
@@ -40,6 +40,18 @@ export const useLeaveRequests = () => {
     },
     onError: (error) => {
       showError(`Erreur lors de la mise à jour du statut: ${error.message}`);
+    },
+  });
+
+  const cancelLeaveRequestMutation = useMutation({
+    mutationFn: (requestId: string) => cancelLeaveRequest(requestId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['userLeaveRequests', user?.id] });
+      queryClient.invalidateQueries({ queryKey: ['pendingLeaveRequests'] });
+      showSuccess('Demande de congé annulée avec succès !');
+    },
+    onError: (error) => {
+      showError(`Erreur lors de l'annulation de la demande: ${error.message}`);
     },
   });
 
@@ -52,5 +64,7 @@ export const useLeaveRequests = () => {
     isCreatingLeaveRequest: createLeaveRequestMutation.isPending,
     updateLeaveRequestStatus: updateLeaveRequestStatusMutation.mutate,
     isUpdatingLeaveRequestStatus: updateLeaveRequestStatusMutation.isPending,
+    cancelLeaveRequest: cancelLeaveRequestMutation.mutate,
+    isCancellingLeaveRequest: cancelLeaveRequestMutation.isPending,
   };
 };

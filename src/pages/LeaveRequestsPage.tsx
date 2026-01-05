@@ -15,6 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useLeaveRequests } from '@/hooks/use-leave-requests';
 import { useSession } from '@/components/SessionContextProvider';
 import { showError } from '@/utils/toast';
+import { LeaveRequest } from '@/integrations/supabase/leaveRequests'; // Import LeaveRequest interface
 
 const LeaveRequestsPage = () => {
   const { user } = useSession();
@@ -27,11 +28,16 @@ const LeaveRequestsPage = () => {
     isCreatingLeaveRequest,
     updateLeaveRequestStatus,
     isUpdatingLeaveRequestStatus,
+    cancelLeaveRequest,
+    isCancellingLeaveRequest,
   } = useLeaveRequests();
 
   const [leaveType, setLeaveType] = useState('');
   const [startDate, setStartDate] = useState<Date | undefined>(undefined);
   const [endDate, setEndDate] = useState<Date | undefined>(undefined);
+  const [durationType, setDurationType] = useState<'full_day' | 'half_day_morning' | 'half_day_afternoon' | 'hourly'>('full_day');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [reason, setReason] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -41,18 +47,39 @@ const LeaveRequestsPage = () => {
       return;
     }
 
-    createLeaveRequest({
+    const requestData: Omit<LeaveRequest, 'id' | 'requested_at' | 'status' | 'approved_by_user_id' | 'approved_at'> = {
       user_id: user.id,
       type: leaveType,
       start_date: format(startDate, 'yyyy-MM-dd'),
       end_date: endDate ? format(endDate, 'yyyy-MM-dd') : undefined,
+      duration_type: durationType,
       reason,
-    });
+    };
+
+    if (durationType === 'hourly') {
+      if (!startTime || !endTime) {
+        showError('Veuillez spécifier les heures de début et de fin pour un congé horaire.');
+        return;
+      }
+      requestData.start_time = startTime;
+      requestData.end_time = endTime;
+    } else if (durationType === 'half_day_morning') {
+      requestData.start_time = '09:00:00'; // Example morning start
+      requestData.end_time = '13:00:00';   // Example morning end
+    } else if (durationType === 'half_day_afternoon') {
+      requestData.start_time = '14:00:00'; // Example afternoon start
+      requestData.end_time = '18:00:00';   // Example afternoon end
+    }
+
+    createLeaveRequest(requestData);
 
     // Reset form
     setLeaveType('');
     setStartDate(undefined);
     setEndDate(undefined);
+    setDurationType('full_day');
+    setStartTime('');
+    setEndTime('');
     setReason('');
   };
 
@@ -66,6 +93,10 @@ const LeaveRequestsPage = () => {
     if (user?.id) {
       updateLeaveRequestStatus({ requestId, status: 'rejected', approvedByUserId: user.id });
     }
+  };
+
+  const handleCancel = (requestId: string) => {
+    cancelLeaveRequest(requestId);
   };
 
   return (
@@ -98,6 +129,21 @@ const LeaveRequestsPage = () => {
             </div>
 
             <div className="grid gap-2">
+              <Label htmlFor="durationType">Durée</Label>
+              <Select value={durationType} onValueChange={(value: 'full_day' | 'half_day_morning' | 'half_day_afternoon' | 'hourly') => setDurationType(value)}>
+                <SelectTrigger id="durationType" className="button-hover-effect">
+                  <SelectValue placeholder="Sélectionner la durée" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="full_day">Journée complète</SelectItem>
+                  <SelectItem value="half_day_morning">Demi-journée (Matin)</SelectItem>
+                  <SelectItem value="half_day_afternoon">Demi-journée (Après-midi)</SelectItem>
+                  <SelectItem value="hourly">Par heure</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
               <Label htmlFor="startDate">Date de Début</Label>
               <Popover>
                 <PopoverTrigger asChild>
@@ -124,34 +170,61 @@ const LeaveRequestsPage = () => {
               </Popover>
             </div>
 
-            <div className="grid gap-2">
-              <Label htmlFor="endDate">Date de Fin (optionnel)</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant={"outline"}
-                    className={cn(
-                      "w-full justify-start text-left font-normal button-hover-effect",
-                      !endDate && "text-muted-foreground"
-                    )}
-                    disabled={!startDate}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {endDate ? format(endDate, "PPP", { locale: fr }) : <span>Choisir une date</span>}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 bg-card text-card-foreground border border-border rounded-md shadow-lg">
-                  <Calendar
-                    mode="single"
-                    selected={endDate}
-                    onSelect={setEndDate}
-                    initialFocus
-                    locale={fr}
-                    fromDate={startDate}
+            {(durationType === 'full_day' || durationType === 'half_day_morning' || durationType === 'half_day_afternoon') && (
+              <div className="grid gap-2">
+                <Label htmlFor="endDate">Date de Fin (optionnel)</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant={"outline"}
+                      className={cn(
+                        "w-full justify-start text-left font-normal button-hover-effect",
+                        !endDate && "text-muted-foreground"
+                      )}
+                      disabled={!startDate || durationType !== 'full_day'} // Disable if not full_day
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {endDate ? format(endDate, "PPP", { locale: fr }) : <span>Choisir une date</span>}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 bg-card text-card-foreground border border-border rounded-md shadow-lg">
+                    <Calendar
+                      mode="single"
+                      selected={endDate}
+                      onSelect={setEndDate}
+                      initialFocus
+                      locale={fr}
+                      fromDate={startDate}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+
+            {durationType === 'hourly' && (
+              <>
+                <div className="grid gap-2">
+                  <Label htmlFor="startTime">Heure de Début</Label>
+                  <Input
+                    id="startTime"
+                    type="time"
+                    value={startTime}
+                    onChange={(e) => setStartTime(e.target.value)}
+                    className="border-border focus-visible:ring-ring focus-visible:ring-offset-background"
                   />
-                </PopoverContent>
-              </Popover>
-            </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="endTime">Heure de Fin</Label>
+                  <Input
+                    id="endTime"
+                    type="time"
+                    value={endTime}
+                    onChange={(e) => setEndTime(e.target.value)}
+                    className="border-border focus-visible:ring-ring focus-visible:ring-offset-background"
+                  />
+                </div>
+              </>
+            )}
 
             <div className="grid gap-2 md:col-span-2">
               <Label htmlFor="reason">Raison</Label>
@@ -187,6 +260,7 @@ const LeaveRequestsPage = () => {
                     <TableHead>Employé</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Dates</TableHead>
+                    <TableHead>Durée</TableHead>
                     <TableHead>Raison</TableHead>
                     <TableHead>Demandé le</TableHead>
                     <TableHead>Actions</TableHead>
@@ -200,6 +274,12 @@ const LeaveRequestsPage = () => {
                       <TableCell>
                         {format(new Date(request.start_date), 'dd/MM/yyyy', { locale: fr })}
                         {request.end_date && ` - ${format(new Date(request.end_date), 'dd/MM/yyyy', { locale: fr })}`}
+                      </TableCell>
+                      <TableCell>
+                        {request.duration_type === 'hourly' ? `${request.start_time?.substring(0, 5)} - ${request.end_time?.substring(0, 5)}` :
+                         request.duration_type === 'half_day_morning' ? 'Demi-journée (Matin)' :
+                         request.duration_type === 'half_day_afternoon' ? 'Demi-journée (Après-midi)' :
+                         'Journée complète'}
                       </TableCell>
                       <TableCell className="max-w-[200px] truncate">{request.reason || '-'}</TableCell>
                       <TableCell>{format(new Date(request.requested_at), 'dd/MM/yyyy HH:mm', { locale: fr })}</TableCell>
@@ -251,10 +331,11 @@ const LeaveRequestsPage = () => {
                   <TableRow>
                     <TableHead>Type</TableHead>
                     <TableHead>Dates</TableHead>
+                    <TableHead>Durée</TableHead>
                     <TableHead>Raison</TableHead>
                     <TableHead>Statut</TableHead>
                     <TableHead>Demandé le</TableHead>
-                    <TableHead>Approuvé par</TableHead>
+                    <TableHead>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -265,18 +346,37 @@ const LeaveRequestsPage = () => {
                         {format(new Date(request.start_date), 'dd/MM/yyyy', { locale: fr })}
                         {request.end_date && ` - ${format(new Date(request.end_date), 'dd/MM/yyyy', { locale: fr })}`}
                       </TableCell>
+                      <TableCell>
+                        {request.duration_type === 'hourly' ? `${request.start_time?.substring(0, 5)} - ${request.end_time?.substring(0, 5)}` :
+                         request.duration_type === 'half_day_morning' ? 'Demi-journée (Matin)' :
+                         request.duration_type === 'half_day_afternoon' ? 'Demi-journée (Après-midi)' :
+                         'Journée complète'}
+                      </TableCell>
                       <TableCell className="max-w-[200px] truncate">{request.reason || '-'}</TableCell>
                       <TableCell>
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                           request.status === 'approved' ? 'bg-green-100 text-green-800' :
                           request.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          request.status === 'cancelled' ? 'bg-gray-100 text-gray-800' :
                           'bg-yellow-100 text-yellow-800'
                         }`}>
                           {request.status}
                         </span>
                       </TableCell>
                       <TableCell>{format(new Date(request.requested_at!), 'dd/MM/yyyy HH:mm', { locale: fr })}</TableCell>
-                      <TableCell>{request.approved_by_user_id || '-'}</TableCell>
+                      <TableCell>
+                        {request.status === 'pending' && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleCancel(request.id!)}
+                            disabled={isCancellingLeaveRequest}
+                            className="button-hover-effect"
+                          >
+                            Annuler
+                          </Button>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
