@@ -10,9 +10,11 @@ import { useTeamManagement } from '@/hooks/use-team-management';
 import { Profile } from '@/integrations/supabase/teams';
 import { Loader2, UserPlus } from 'lucide-react';
 import { showError, showSuccess } from '@/utils/toast';
-import { signUpWithEmail } from '@/integrations/supabase/auth'; // Import signUp function
+import { signUpWithEmail } from '@/integrations/supabase/auth';
+import { useQueryClient } from '@tanstack/react-query'; // Import useQueryClient
 
 const TeamManagementPage = () => {
+  const queryClient = useQueryClient(); // Get queryClient instance
   const {
     teams,
     profiles,
@@ -86,13 +88,13 @@ const TeamManagementPage = () => {
     try {
       await signUpWithEmail(newEmployeeEmail, newEmployeePassword, newEmployeeFirstName, newEmployeeLastName);
       showSuccess('Nouvel employé enregistré avec succès !');
+      // Invalidate the profiles query to refetch the list with the new employee
+      queryClient.invalidateQueries({ queryKey: ['profiles'] });
       setNewEmployeeEmail('');
       setNewEmployeePassword('');
       setNewEmployeeFirstName('');
       setNewEmployeeLastName('');
       setIsRegisterEmployeeDialogOpen(false);
-      // Invalidate profiles query to refetch the list with the new employee
-      // This is handled by useTeamManagement's internal query client invalidation
     } catch (error: any) {
       showError(`Erreur lors de l'enregistrement de l'employé: ${error.message}`);
     } finally {
